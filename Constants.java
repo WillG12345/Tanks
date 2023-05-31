@@ -6,4 +6,5 @@ public class Constants
    
 
     public static final int EMPTY = 0; 
+    public static final float TICK = 2.5f;
 }

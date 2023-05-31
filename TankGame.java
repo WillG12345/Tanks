@@ -153,10 +153,10 @@ public class TankGame extends ApplicationAdapter
         
         // makes the barriers formatted startingPoint1, startingPoint2, amountToMoveAfterCollision
         barriers = new Vector2[4][3];
-        barriers[0] = new Vector2[] {new Vector2(0, 0), new Vector2(0, Constants.WORLD_HEIGHT), new Vector2(1, 0)}; // left wall
-        barriers[1] = new Vector2[] {new Vector2(0, Constants.WORLD_HEIGHT), new Vector2(Constants.WORLD_WIDTH, Constants.WORLD_HEIGHT), new Vector2(0, -1)}; // top wall
-        barriers[2] = new Vector2[] {new Vector2(0, 0), new Vector2(Constants.WORLD_WIDTH, 0), new Vector2(0, 1)}; // bottom wall
-        barriers[3] = new Vector2[] {new Vector2(Constants.WORLD_WIDTH, 0), new Vector2(Constants.WORLD_WIDTH, Constants.WORLD_HEIGHT), new Vector2(-1, 0)}; // right wall
+        barriers[0] = new Vector2[] {new Vector2(0, 0), new Vector2(0, Constants.WORLD_HEIGHT), new Vector2(Constants.TICK, 0)}; // left wall
+        barriers[1] = new Vector2[] {new Vector2(0, Constants.WORLD_HEIGHT), new Vector2(Constants.WORLD_WIDTH, Constants.WORLD_HEIGHT), new Vector2(0, -Constants.TICK)}; // top wall
+        barriers[2] = new Vector2[] {new Vector2(0, 0), new Vector2(Constants.WORLD_WIDTH, 0), new Vector2(0, Constants.TICK)}; // bottom wall
+        barriers[3] = new Vector2[] {new Vector2(Constants.WORLD_WIDTH, 0), new Vector2(Constants.WORLD_WIDTH, Constants.WORLD_HEIGHT), new Vector2(-Constants.TICK, 0)}; // right wall
     }
 
     public void render() {
@@ -164,7 +164,7 @@ public class TankGame extends ApplicationAdapter
         handleInput();
         
         // Checks if we are colliding with a barrier
-        //checkCollisions(); off for now until i get it working
+        checkCollisions(); // off for now until i get it working
 
         // Update game logic
         update();
@@ -213,11 +213,11 @@ public class TankGame extends ApplicationAdapter
     
     private void checkCollisions() {
         for (Vector2[] b: barriers) {
-            if (Intersector.intersectLinePolygon(b[0], b[1], tankPolygon)) {
+            if (BetterIntersector.intersectLinePolygon(b[0], b[1], tankPolygon.getTransformedVertices())) {
                 position.add(b[2]);
                 System.out.println("intersect red");
             }
-            if (Intersector.intersectLinePolygon(b[0], b[1], tankPolygon2)) {
+            if (BetterIntersector.intersectLinePolygon(b[0], b[1], tankPolygon2.getTransformedVertices())) {
                 position2.add(b[2]);
                 System.out.println("intersect blue");
             }
