@@ -77,10 +77,7 @@ public class TankGame extends ApplicationAdapter
     private Vector2[][] barriers;
     
     // For bullets
-    private Vector2 bulletPosition2;
-    private Vector2 bulletPosition;
-    private Vector2 bulletDirection;
-    private Vector2 bulletVelocity;
+    private ArrayList<Bullet> bullets;
     
 
     @Override
@@ -103,8 +100,6 @@ public class TankGame extends ApplicationAdapter
 
         redbullet=new Texture("redbullet.png");
         bluebullet=new Texture("bluebullet.png");
-        bulletPosition=new Vector2(100,100);
-        bulletPosition2=new Vector2(100,100);
 
         img = new Texture("background.png");
         menuimg = new Texture("menuimg.jfif");
@@ -157,6 +152,8 @@ public class TankGame extends ApplicationAdapter
         barriers[1] = new Vector2[] {new Vector2(0, Constants.WORLD_HEIGHT), new Vector2(Constants.WORLD_WIDTH, Constants.WORLD_HEIGHT), new Vector2(0, -Constants.TICK)}; // top wall
         barriers[2] = new Vector2[] {new Vector2(0, 0), new Vector2(Constants.WORLD_WIDTH, 0), new Vector2(0, Constants.TICK)}; // bottom wall
         barriers[3] = new Vector2[] {new Vector2(Constants.WORLD_WIDTH, 0), new Vector2(Constants.WORLD_WIDTH, Constants.WORLD_HEIGHT), new Vector2(-Constants.TICK, 0)}; // right wall
+        
+        bullets = new ArrayList<>();
     }
 
     public void render() {
@@ -181,6 +178,12 @@ public class TankGame extends ApplicationAdapter
         // Draw the background
         batch.draw(img, 0, 0, Constants.WORLD_WIDTH, Constants.WORLD_HEIGHT);
 
+        // Draw bullets
+        for (Bullet bullet: bullets) {
+            bullet.update();
+            batch.draw(bullet.getImg(), bullet.getX(), bullet.getY(), bullet.getWidth(), bullet.getHeight());
+        }
+        
         // Draw tanks
         drawredTank(tankTexture, tankPolygon);
         drawblueTank(tankTexture2, tankPolygon2);
@@ -193,20 +196,20 @@ public class TankGame extends ApplicationAdapter
             drawInstructions();
         }
         
-        
-        if (Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
+        // checks for blue bullet fire
+        if (Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT)) {
             // Calculate bullet position and velocity based on tank information
-            
-            /*bulletPosition.set(position2.x + tankTexture2.getWidth() / 2, position2.y + tankTexture2.getHeight() / 2);
-            bulletDirection.set(MathUtils.cosDeg(tankRotation2), MathUtils.sinDeg(tankRotation2)).nor();
-            bulletVelocity.set(bulletDirection).scl(5);
-            bulletPosition.add(bulletVelocity.x, bulletVelocity.y);
-
-            // Draw the bullet
-            batch.draw(bluebullet, bulletPosition.x, bulletPosition.y);*/
+            // adds bullet to the bullet array list
+            bullets.add(new Bullet(bluebullet, position2.x + tankTexture2.getWidth() / 2 - Constants.BULLET_RADIUS, position2.y + 35, tankPolygon2.getRotation() + 90));
         }
-
-
+        
+        // checks for red bullet fire
+        if (Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_RIGHT)) {
+            // Calculate bullet position and velocity based on tank information
+            // adds bullet to the bullet array list
+            bullets.add(new Bullet(redbullet, position.x + tankTexture.getWidth() / 2 - Constants.BULLET_RADIUS, position.y + 35, tankPolygon.getRotation() + 90));
+        }
+        
         // End the sprite batch
         batch.end();
     }
@@ -214,12 +217,12 @@ public class TankGame extends ApplicationAdapter
     private void checkCollisions() {
         for (Vector2[] b: barriers) {
             if (BetterIntersector.intersectLinePolygon(b[0], b[1], tankPolygon.getTransformedVertices())) {
-                position.add(b[2]);
-                System.out.println("intersect red");
+                // Red tank is intersecting something
+                position.add(b[2]); // perform transformation to prevent passing barriers
             }
             if (BetterIntersector.intersectLinePolygon(b[0], b[1], tankPolygon2.getTransformedVertices())) {
-                position2.add(b[2]);
-                System.out.println("intersect blue");
+                // Blue tank is intersecting something
+                position2.add(b[2]); // perform transformation to prevent passing barriers
             }
         }
     }
@@ -347,8 +350,6 @@ public class TankGame extends ApplicationAdapter
         float tankOriginY = tankPolygon.getOriginY();
         float tankRotation = tankPolygon.getRotation();
 
-        //batch.draw(tankTexture, tankX+1200, tankY, tankOriginX, tankOriginY, tankTexture.getWidth(), tankTexture.getHeight(),
-            //1f, 1f, tankRotation, 0, 0, tankTexture.getWidth(), tankTexture.getHeight(), false, false);
         batch.draw(tankTexture, position.x, position.y, tankOriginX, tankOriginY, tankTexture.getWidth(), tankTexture.getHeight(),
             1f, 1f, tankRotation, 0, 0, tankTexture.getWidth(), tankTexture.getHeight(), false, false);
 

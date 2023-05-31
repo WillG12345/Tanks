@@ -35,7 +35,6 @@ public class BetterIntersector
         int temp = Intersector.pointLineSide(point1, point2, vertex);
         for (int i = 2; i < verticies.length; i+=2) {
             vertex.set(verticies[i], verticies[i+1]);
-            System.out.println("Vertex: " + vertex);
             if (Intersector.pointLineSide(point1, point2, vertex) != temp) {
                 return true;
             }
