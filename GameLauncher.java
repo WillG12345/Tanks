@@ -11,6 +11,6 @@ public class GameLauncher
         
         
         //Create an instance of the class that extends the Game class
-        LwjglApplication launcher = new LwjglApplication(new TankGamee(), config);
+        LwjglApplication launcher = new LwjglApplication(new TankGame(), config);
     }
 }
