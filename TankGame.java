@@ -24,7 +24,7 @@ import java.util.*;
 import com.badlogic.gdx.audio.*; 
 import com.badlogic.gdx.math.Polygon;
 
-public class TankGamee extends ApplicationAdapter 
+public class TankGame extends ApplicationAdapter 
 {
     SpriteBatch batch;
     
@@ -74,11 +74,10 @@ public class TankGamee extends ApplicationAdapter
     private Gamestate gamestate; 
     private Viewport viewport; //maintains the ratios of your world
     private OrthographicCamera camera; //the camera to our world
+    private Vector2[][] barriers;
     
-    private Vector2 bulletPosition2;
-    private Vector2 bulletPosition;
-    private Vector2 bulletDirection;
-    private Vector2 bulletVelocity;
+    // For bullets
+    private ArrayList<Bullet> bullets;
     
 
     @Override
@@ -91,7 +90,7 @@ public class TankGamee extends ApplicationAdapter
         start = new Texture("button.png");
         startHighlighted =  new Texture("highlightedbutton.png");
         
-         exit = new Texture("exit.png");
+        exit = new Texture("exit.png");
         exitHigh = new Texture("exitHigh.png");
         
         set = new Texture("set.png");
@@ -101,16 +100,19 @@ public class TankGamee extends ApplicationAdapter
 
         redbullet=new Texture("redbullet.png");
         bluebullet=new Texture("bluebullet.png");
-        bulletPosition=new Vector2(100,100);
-        bulletPosition2=new Vector2(100,100);
 
         img = new Texture("background.png");
         menuimg = new Texture("menuimg.jfif");
         instructionsimg = new Texture("instructionsimg.png");
         tankTexture = new Texture("tank1.png");
         tankTexture2=new Texture("Tank2.png");
-        position = new Vector2(100, 100);
-        position2 = new Vector2(100, 100);
+        
+        // Starting positon for red tank
+        position = new Vector2(1300, 100);
+        
+        // Starting position for blue tank
+        position2 = new Vector2(75, 400);
+        
         tankRotation = 0;
         tankRotation2 = 180;
 
@@ -143,46 +145,23 @@ public class TankGamee extends ApplicationAdapter
         exitButtonRect = new Rectangle(Constants.WORLD_WIDTH / 2 -  exit.getWidth() / 2, Constants.WORLD_HEIGHT / 2-100 ,exit.getWidth(), exit.getHeight());
 
         startButtonRect = new Rectangle(Constants.WORLD_WIDTH / 2 -  start.getWidth() / 2, Constants.WORLD_HEIGHT / 2 ,start.getWidth(), start.getHeight());
+        
+        // makes the barriers formatted startingPoint1, startingPoint2, amountToMoveAfterCollision
+        barriers = new Vector2[4][3];
+        barriers[0] = new Vector2[] {new Vector2(0, 0), new Vector2(0, Constants.WORLD_HEIGHT), new Vector2(Constants.TICK, 0)}; // left wall
+        barriers[1] = new Vector2[] {new Vector2(0, Constants.WORLD_HEIGHT), new Vector2(Constants.WORLD_WIDTH, Constants.WORLD_HEIGHT), new Vector2(0, -Constants.TICK)}; // top wall
+        barriers[2] = new Vector2[] {new Vector2(0, 0), new Vector2(Constants.WORLD_WIDTH, 0), new Vector2(0, Constants.TICK)}; // bottom wall
+        barriers[3] = new Vector2[] {new Vector2(Constants.WORLD_WIDTH, 0), new Vector2(Constants.WORLD_WIDTH, Constants.WORLD_HEIGHT), new Vector2(-Constants.TICK, 0)}; // right wall
+        
+        bullets = new ArrayList<>();
     }
 
     public void render() {
         // Handle input
         handleInput();
         
-
-        if(position.x<0-1200)
-        {
-            position.x=0-1200;
-        }
-        if(position.x>Constants.WORLD_WIDTH-tankTexture.getWidth()-1200)
-        {
-            position.x=Constants.WORLD_WIDTH-tankTexture.getWidth()-1200;
-        }
-        if(position.y>Constants.WORLD_HEIGHT-tankTexture.getHeight())
-        {
-            position.y=Constants.WORLD_HEIGHT-tankTexture.getHeight();
-        }
-        if(position.y<0)
-        {
-            position.y=0;
-        }
-
-        if(position2.x<0+25)
-        {
-            position2.x=0+25;
-        }
-        if(position2.x>Constants.WORLD_WIDTH-tankTexture2.getWidth()+10)
-        {
-            position2.x=Constants.WORLD_WIDTH-tankTexture2.getWidth()+10;
-        }
-        if(position2.y>Constants.WORLD_HEIGHT-tankTexture.getHeight()-300)
-        {
-            position2.y=Constants.WORLD_HEIGHT-tankTexture.getHeight()-300;
-        }
-        if(position2.y<0-300)
-        {
-            position2.y=0-300;
-        }
+        // Checks if we are colliding with a barrier
+        checkCollisions(); // off for now until i get it working
 
         // Update game logic
         update();
@@ -199,6 +178,12 @@ public class TankGamee extends ApplicationAdapter
         // Draw the background
         batch.draw(img, 0, 0, Constants.WORLD_WIDTH, Constants.WORLD_HEIGHT);
 
+        // Draw bullets
+        for (Bullet bullet: bullets) {
+            bullet.update();
+            batch.draw(bullet.getImg(), bullet.getX(), bullet.getY(), bullet.getWidth(), bullet.getHeight());
+        }
+        
         // Draw tanks
         drawredTank(tankTexture, tankPolygon);
         drawblueTank(tankTexture2, tankPolygon2);
@@ -211,20 +196,35 @@ public class TankGamee extends ApplicationAdapter
             drawInstructions();
         }
         
-         if (Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
+        // checks for blue bullet fire
+        if (Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT)) {
             // Calculate bullet position and velocity based on tank information
-            bulletPosition.set(position2.x + tankTexture2.getWidth() / 2, position2.y + tankTexture2.getHeight() / 2);
-            bulletDirection.set(MathUtils.cosDeg(tankRotation2), MathUtils.sinDeg(tankRotation2)).nor();
-            bulletVelocity.set(bulletDirection).scl(5);
-            bulletPosition.add(bulletVelocity.x, bulletVelocity.y);
-
-            // Draw the bullet
-            batch.draw(bluebullet, bulletPosition.x, bulletPosition.y);
+            // adds bullet to the bullet array list
+            bullets.add(new Bullet(bluebullet, position2.x + tankTexture2.getWidth() / 2 - Constants.BULLET_RADIUS, position2.y + 35, tankPolygon2.getRotation() + 90));
         }
-
-
+        
+        // checks for red bullet fire
+        if (Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_RIGHT)) {
+            // Calculate bullet position and velocity based on tank information
+            // adds bullet to the bullet array list
+            bullets.add(new Bullet(redbullet, position.x + tankTexture.getWidth() / 2 - Constants.BULLET_RADIUS, position.y + 35, tankPolygon.getRotation() + 90));
+        }
+        
         // End the sprite batch
         batch.end();
+    }
+    
+    private void checkCollisions() {
+        for (Vector2[] b: barriers) {
+            if (BetterIntersector.intersectLinePolygon(b[0], b[1], tankPolygon.getTransformedVertices())) {
+                // Red tank is intersecting something
+                position.add(b[2]); // perform transformation to prevent passing barriers
+            }
+            if (BetterIntersector.intersectLinePolygon(b[0], b[1], tankPolygon2.getTransformedVertices())) {
+                // Blue tank is intersecting something
+                position2.add(b[2]); // perform transformation to prevent passing barriers
+            }
+        }
     }
 
     @Override
@@ -338,6 +338,9 @@ public class TankGamee extends ApplicationAdapter
 
         // Set the batch projection matrix to the camera combined matrix
         batch.setProjectionMatrix(camera.combined);
+        
+        tankPolygon.setPosition(position.x, position.y);
+        tankPolygon2.setPosition(position2.x, position2.y);
     }
 
     private void drawredTank(Texture tankTexture, Polygon tankPolygon) {
@@ -347,7 +350,7 @@ public class TankGamee extends ApplicationAdapter
         float tankOriginY = tankPolygon.getOriginY();
         float tankRotation = tankPolygon.getRotation();
 
-        batch.draw(tankTexture, tankX+1200, tankY, tankOriginX, tankOriginY, tankTexture.getWidth(), tankTexture.getHeight(),
+        batch.draw(tankTexture, position.x, position.y, tankOriginX, tankOriginY, tankTexture.getWidth(), tankTexture.getHeight(),
             1f, 1f, tankRotation, 0, 0, tankTexture.getWidth(), tankTexture.getHeight(), false, false);
 
     }
@@ -359,7 +362,7 @@ public class TankGamee extends ApplicationAdapter
         float tankOriginY = tankPolygon.getOriginY();
         float tankRotation = tankPolygon.getRotation();
 
-        batch.draw(tankTexture, tankX-25, tankY+300, tankOriginX, tankOriginY, tankTexture.getWidth(), tankTexture.getHeight(),
+        batch.draw(tankTexture, position2.x, position2.y, tankOriginX, tankOriginY, tankTexture.getWidth(), tankTexture.getHeight(),
             1f, 1f, tankRotation, 0, 0, tankTexture.getWidth(), tankTexture.getHeight(), false, false);
 
     }
