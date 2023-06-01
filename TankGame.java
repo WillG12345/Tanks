@@ -201,7 +201,7 @@ public class TankGame extends ApplicationAdapter
         }
 
         // checks for blue bullet fire
-        if (Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT)&& shootTimer >= shootCooldown) {
+        if (Gdx.input.isKeyJustPressed(Input.Keys.E)&& shootTimer >= shootCooldown) {
             // Calculate bullet position and velocity based on tank information
             // adds bullet to the bullet array list
             bullets.add(new Bullet(bluebullet, position2.x + tankTexture2.getWidth() / 2 - Constants.BULLET_RADIUS, position2.y + 35, tankPolygon2.getRotation() + 90));
@@ -209,7 +209,7 @@ public class TankGame extends ApplicationAdapter
         }
 
         // checks for red bullet fire
-        if (Gdx.input.isKeyJustPressed(Input.Keys.P)&& shootTimer2 >= shootCooldown) {
+        if (Gdx.input.isKeyJustPressed(Input.Keys.SLASH)&& shootTimer2 >= shootCooldown) {
             // Calculate bullet position and velocity based on tank information
             // adds bullet to the bullet array list
             bullets.add(new Bullet(redbullet, position.x + tankTexture.getWidth() / 2 - Constants.BULLET_RADIUS, position.y + 35, tankPolygon.getRotation() + 90));
