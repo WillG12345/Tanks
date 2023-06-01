@@ -46,6 +46,7 @@ public class Bullet
     }
     
     public Circle getCollisionCircle() {
+        // Inefficient to create new object everytime but should be fine
         return new Circle(position.x + Constants.BULLET_RADIUS, position.y + Constants.BULLET_RADIUS, Constants.BULLET_RADIUS);
     }
 }

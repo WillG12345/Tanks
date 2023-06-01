@@ -36,8 +36,6 @@ public class TankGame extends ApplicationAdapter
     private Texture setHigh;
     private Rectangle setButtonRect;
 
-
-
     Texture tankTexture;
     Texture tankTexture2;
     Polygon tankPolygon;
