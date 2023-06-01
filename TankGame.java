@@ -27,11 +27,18 @@ import com.badlogic.gdx.math.Polygon;
 public class TankGame extends ApplicationAdapter 
 {
     SpriteBatch batch;
-    
+
+    private float shootTimer;  // Add a timer for shooting cooldown
+    private float shootTimer2;  // Add a timer for shooting cooldown
+    private float shootCooldown = 1.0f;  // Set the desired cooldown duration (1 second in this example)
+
+    private int tankHealth = 5;
+    private int tankHealth2 = 5;
+
     private Texture exit;
     private Texture exitHigh;
     private Rectangle exitButtonRect;
-    
+
     private Texture set;
     private Texture setHigh;
     private Rectangle setButtonRect;
@@ -45,14 +52,12 @@ public class TankGame extends ApplicationAdapter
     Texture img;
     private float tankRotation;
     private float tankRotation2;
-    
-    
 
     private Texture redbullet;
     private Texture bluebullet;
     private Circle rb;
     private Circle bb;
-    
+
     // private Vector2 tankPosition;
 
     private Rectangle startButtonRect;
@@ -73,10 +78,9 @@ public class TankGame extends ApplicationAdapter
     private Viewport viewport; //maintains the ratios of your world
     private OrthographicCamera camera; //the camera to our world
     private Vector2[][] barriers;
-    
+
     // For bullets
     private ArrayList<Bullet> bullets;
-    
 
     @Override
     public void create () {
@@ -87,14 +91,12 @@ public class TankGame extends ApplicationAdapter
         font = new BitmapFont(); 
         start = new Texture("button.png");
         startHighlighted =  new Texture("highlightedbutton.png");
-        
+
         exit = new Texture("exit.png");
         exitHigh = new Texture("exitHigh.png");
-        
+
         set = new Texture("set.png");
         setHigh = new Texture("setHigh.png");
-
-
 
         redbullet=new Texture("redbullet.png");
         bluebullet=new Texture("bluebullet.png");
@@ -104,15 +106,18 @@ public class TankGame extends ApplicationAdapter
         instructionsimg = new Texture("instructionsimg.png");
         tankTexture = new Texture("tank1.png");
         tankTexture2=new Texture("Tank2.png");
-        
+
         // Starting positon for red tank
-        position = new Vector2(1300, 100);
-        
+        position = new Vector2(1300, 100); 
+
         // Starting position for blue tank
-        position2 = new Vector2(75, 400);
-        
+        position2 = new Vector2(75, 750);
+
         tankRotation = 0;
         tankRotation2 = 180;
+
+        shootTimer = shootCooldown;
+        shootTimer2 = shootCooldown;
 
         rb=new Circle(Constants.WORLD_WIDTH, Constants.WORLD_HEIGHT, 10);
         bb=new Circle(Constants.WORLD_WIDTH, Constants.WORLD_HEIGHT, 10);
@@ -143,26 +148,28 @@ public class TankGame extends ApplicationAdapter
         exitButtonRect = new Rectangle(Constants.WORLD_WIDTH / 2 -  exit.getWidth() / 2, Constants.WORLD_HEIGHT / 2-100 ,exit.getWidth(), exit.getHeight());
 
         startButtonRect = new Rectangle(Constants.WORLD_WIDTH / 2 -  start.getWidth() / 2, Constants.WORLD_HEIGHT / 2 ,start.getWidth(), start.getHeight());
-        
+
         // makes the barriers formatted startingPoint1, startingPoint2, amountToMoveAfterCollision
         barriers = new Vector2[4][3];
         barriers[0] = new Vector2[] {new Vector2(0, 0), new Vector2(0, Constants.WORLD_HEIGHT), new Vector2(Constants.TICK, 0)}; // left wall
         barriers[1] = new Vector2[] {new Vector2(0, Constants.WORLD_HEIGHT), new Vector2(Constants.WORLD_WIDTH, Constants.WORLD_HEIGHT), new Vector2(0, -Constants.TICK)}; // top wall
         barriers[2] = new Vector2[] {new Vector2(0, 0), new Vector2(Constants.WORLD_WIDTH, 0), new Vector2(0, Constants.TICK)}; // bottom wall
         barriers[3] = new Vector2[] {new Vector2(Constants.WORLD_WIDTH, 0), new Vector2(Constants.WORLD_WIDTH, Constants.WORLD_HEIGHT), new Vector2(-Constants.TICK, 0)}; // right wall
-        
+
         bullets = new ArrayList<>();
     }
 
     public void render() {
         // Handle input
         handleInput();
-        
+
         // Checks if we are colliding with a barrier
         checkCollisions(); // off for now until i get it working
 
         // Update game logic
         update();
+        
+        //System.out.println(bullets.size());
 
         // Clear the screen
         Gdx.gl.glClearColor(0, 0, 0, 1);
@@ -171,7 +178,6 @@ public class TankGame extends ApplicationAdapter
         // Begin the sprite batch
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
-        
 
         // Draw the background
         batch.draw(img, 0, 0, Constants.WORLD_WIDTH, Constants.WORLD_HEIGHT);
@@ -181,7 +187,7 @@ public class TankGame extends ApplicationAdapter
             bullet.update();
             batch.draw(bullet.getImg(), bullet.getX(), bullet.getY(), bullet.getWidth(), bullet.getHeight());
         }
-        
+
         // Draw tanks
         drawredTank(tankTexture, tankPolygon);
         drawblueTank(tankTexture2, tankPolygon2);
@@ -193,25 +199,30 @@ public class TankGame extends ApplicationAdapter
         } else if (gamestate == Gamestate.INSTRUCTIONS) {
             drawInstructions();
         }
-        
+
         // checks for blue bullet fire
-        if (Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT)) {
+        if (Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT)&& shootTimer >= shootCooldown) {
             // Calculate bullet position and velocity based on tank information
             // adds bullet to the bullet array list
             bullets.add(new Bullet(bluebullet, position2.x + tankTexture2.getWidth() / 2 - Constants.BULLET_RADIUS, position2.y + 35, tankPolygon2.getRotation() + 90));
+            shootTimer = 0.0f;
         }
-        
+
         // checks for red bullet fire
-        if (Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_RIGHT)) {
+        if (Gdx.input.isKeyJustPressed(Input.Keys.P)&& shootTimer2 >= shootCooldown) {
             // Calculate bullet position and velocity based on tank information
             // adds bullet to the bullet array list
             bullets.add(new Bullet(redbullet, position.x + tankTexture.getWidth() / 2 - Constants.BULLET_RADIUS, position.y + 35, tankPolygon.getRotation() + 90));
+            shootTimer2 = 0.0f;
         }
-        
+
+        shootTimer += Gdx.graphics.getDeltaTime();
+        shootTimer2 += Gdx.graphics.getDeltaTime();
+
         // End the sprite batch
         batch.end();
     }
-    
+
     private void checkCollisions() {
         for (Vector2[] b: barriers) {
             if (BetterIntersector.intersectLinePolygon(b[0], b[1], tankPolygon.getTransformedVertices())) {
@@ -222,6 +233,22 @@ public class TankGame extends ApplicationAdapter
                 // Blue tank is intersecting something
                 position2.add(b[2]); // perform transformation to prevent passing barriers
             }
+        }
+        
+        for (Bullet bullet : bullets) {
+                Circle bulletCircle = bullet.getCollisionCircle();
+                if (Intersector.overlaps(bulletCircle, tankPolygon.getBoundingRectangle()) && bullet.getImg() != redbullet) {
+                    tankHealth--; // Decrease tank's health
+                    bullets.remove(bullet); // Remove the bullet
+                    break; // Exit the loop to avoid ConcurrentModificationException
+                }
+                /*
+                if (Intersector.overlaps(bulletCircle, tankPolygon2.getBoundingRectangle())) {
+                tankHealth2--; // Decrease tank's health
+                bullets.remove(bullet); // Remove the bullet
+                break; // Exit the loop to avoid ConcurrentModificationException
+                }
+                 */
         }
     }
 
@@ -266,7 +293,7 @@ public class TankGame extends ApplicationAdapter
 
             // Handle input for tank 2
             handleTankInput2(tankPolygon2, Input.Keys.A, Input.Keys.D, Input.Keys.W, Input.Keys.S);
-            
+
         } else {
             // Handle menu and instructions screen input
             if (Gdx.input.isKeyJustPressed(Input.Keys.I)) {
@@ -326,7 +353,6 @@ public class TankGame extends ApplicationAdapter
         position2.y += (float) Math.cos(Math.toRadians(rotation2)) * deltaY2;
         tankPolygon2.setPosition(position2.x, position2.y);
         tankPolygon2.setRotation(rotation2);
-        
 
     }
 
@@ -336,7 +362,7 @@ public class TankGame extends ApplicationAdapter
 
         // Set the batch projection matrix to the camera combined matrix
         batch.setProjectionMatrix(camera.combined);
-        
+
         tankPolygon.setPosition(position.x, position.y);
         tankPolygon2.setPosition(position2.x, position2.y);
     }
@@ -383,7 +409,7 @@ public class TankGame extends ApplicationAdapter
         {
             gamestate = Gamestate.GAME; 
         }
-          if (setButtonRect.contains(mouseX, mouseY)) {
+        if (setButtonRect.contains(mouseX, mouseY)) {
             batch.draw(setHigh, setButtonRect.x, setButtonRect.y);
         } else {
             batch.draw(set, setButtonRect.x, setButtonRect.y);
@@ -394,15 +420,15 @@ public class TankGame extends ApplicationAdapter
         }
 
         font.setColor(Color.RED);
-        layout.setText(font, "TANK GAME");
+        layout.setText(font, "Made by William Guo and Jashawn Washington");
         font.draw(batch, layout, Constants.WORLD_WIDTH / 2 - layout.width / 2,
             Constants.WORLD_HEIGHT / 2 + layout.height+200 / 2);
 
         // Draw the menu text
         font.setColor(Color.BLUE);
-        layout.setText(font, "Welcome to the Tank Game\nI: Instructions, G: Start the Game!");
+        layout.setText(font, "WELCOME TO TANK WAR");
         font.draw(batch, layout, Constants.WORLD_WIDTH / 2 - layout.width / 2,
-            Constants.WORLD_HEIGHT / 2 + layout.height-100 / 2);
+            Constants.WORLD_HEIGHT / 2 + layout.height-100 / 2+300);
     }
 
     private void drawInstructions() {
@@ -415,8 +441,8 @@ public class TankGame extends ApplicationAdapter
         font.setColor(Color.RED);
         layout.setText(font, "WASD keys for Blue Tank, Arrow keys for Red Tank, .\nPress M to return to the menu\nPress G to start the game!");
         font.draw(batch, layout, Constants.WORLD_WIDTH / 2 - layout.width / 2,
-            Constants.WORLD_HEIGHT / 2 + layout.height / 2);
-            
+            Constants.WORLD_HEIGHT / 2 + layout.height / 2+200);
+
         if (exitButtonRect.contains(mouseX, mouseY)) {
             batch.draw(exitHigh, exitButtonRect.x, exitButtonRect.y);
         } else {
@@ -430,3 +456,4 @@ public class TankGame extends ApplicationAdapter
     }
 
 }
+

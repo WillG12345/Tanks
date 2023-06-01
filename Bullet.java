@@ -1,5 +1,6 @@
 import com.badlogic.gdx.graphics.Texture; 
 import com.badlogic.gdx.math.Vector2; 
+import java.lang.Object;
 import com.badlogic.gdx.math.Circle; 
 public class Bullet
 {
@@ -45,8 +46,8 @@ public class Bullet
         return angle;
     }
     
-    public Circle getCollisionCircle() {
-        // Inefficient to create new object everytime but should be fine
-        return new Circle(position.x + Constants.BULLET_RADIUS, position.y + Constants.BULLET_RADIUS, Constants.BULLET_RADIUS);
+    public Circle getCollisionCircle()
+    {
+        return new Circle(position.x+ Constants.BULLET_RADIUS, position.y+Constants.BULLET_RADIUS, Constants.BULLET_RADIUS);
     }
 }
