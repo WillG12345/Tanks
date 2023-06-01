@@ -24,8 +24,8 @@ import java.util.*;
 import com.badlogic.gdx.audio.*; 
 import com.badlogic.gdx.math.Polygon;
 /**
- * By Aiden Favish
- * To replace LibGDX's awful implimentation of intersections with polygons and lines
+ * Author: Aiden Favish
+ * To replace LibGDX's awful implimentation of intersections with polygons, circles and lines
  */
 public class BetterIntersector
 {
